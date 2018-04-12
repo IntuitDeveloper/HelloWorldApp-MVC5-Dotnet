@@ -108,7 +108,7 @@ namespace MvcCodeFlowClientManual.Controllers
         {
             switch (submitButton)
             {
-                case "C2QB":
+                case "Connect to Quickbooks":
                     // delegate sending to C2QB Action
                     return (C2QB());
                 

@@ -70,10 +70,11 @@ namespace MvcCodeFlowClientManual.Controllers
             ViewBag.Error = Request.QueryString["error"] ?? "none";
 
             return View();
+            return RedirectToAction ("Token");
 		}
 
         [HttpPost]
-        [ActionName("Index")]
+        [ActionName("Token")]
         public async Task<ActionResult> Token()
         {
             //Request Oauth2 tokens
