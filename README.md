@@ -26,9 +26,9 @@ All configuration for this app is located in web.config. Locate and open this fi
 
 We will need to update 4 items:
 
-clientId
-clientSecret
-redirectUri
+1)clientId
+2)clientSecret
+3)redirectUri
 logPath
 
 First 3 values must match exactly with what is listed in your app settings on developer.intuit.com. If you haven't already created an app, you may do so there. Please read on for important notes about client credentials, scopes, and redirect urls.
