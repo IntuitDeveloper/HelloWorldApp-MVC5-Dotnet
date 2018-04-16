@@ -221,6 +221,12 @@ namespace MvcCodeFlowClientManual.Controllers
             var principal = User as ClaimsPrincipal;
             OAuth2RequestValidator oauthValidator = new OAuth2RequestValidator(principal.FindFirst("access_token").Value);
             ServiceContext serviceContext = new ServiceContext(realmId, IntuitServicesType.QBO, oauthValidator);
+            //Enable minorversion 
+            serviceContext.IppConfiguration.MinorVersion.Qbo = "23";
+            //Enable logging
+            //serviceContext.IppConfiguration.Logger.RequestLog.EnableRequestResponseLogging = true;
+            //serviceContext.IppConfiguration.Logger.RequestLog.ServiceRequestLoggingLocation = @"C:\IdsLogs";//Create a folder in your drive first
+
             return serviceContext;
         }
 
