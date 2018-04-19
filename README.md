@@ -1,3 +1,5 @@
+[![Sample Banner](views/Sample.png)][ss1]
+
 # HelloWorldApp-MVC5-Dotnet
 MVC5 Sample app for Dotnet
 
@@ -58,3 +60,5 @@ All flows should work. The sample app supports the following flows:
 
 **Connect To QuickBooks** - this flow requests non-OpenID scopes. You will be able to make a QuickBooks API sample call (using the OAuth2 token) on the /connected landing page.
  This app also has calls fro CompanyInfo and a sample US company Invoice.
+
+[ss1]: https://help.developer.intuit.com/s/samplefeedback?cid=9010&repoName=HelloWorldApp-MVC5-Dotnet
