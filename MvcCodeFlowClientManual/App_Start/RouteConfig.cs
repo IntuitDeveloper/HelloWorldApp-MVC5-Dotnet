@@ -12,13 +12,8 @@ namespace MvcCodeFlowClientManual
             routes.MapRoute(
                 name: "Default",
                 url: "{controller}/{action}/{id}",
-                defaults: new { controller = "Home", action = "Index", id = UrlParameter.Optional }
+                defaults: new { controller = "App", action = "Index", id = UrlParameter.Optional }
             );
-            //routes.MapRoute(
-            //     name: "ErrorHandler",
-            //     url: "{controller}/{action}/{id}",
-            //     defaults: new { controller = "App", action = "Unauthorised", id = UrlParameter.Optional }
-            //);
 
             routes.MapRoute(
                 "ErrorHandler",

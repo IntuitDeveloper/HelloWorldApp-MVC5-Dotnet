@@ -1,36 +1,21 @@
-﻿
-@{
-    ViewBag.Title = "Index";
+﻿@{
+    ViewBag.Title = "Home Page";
 }
 
-<h2>Claims</h2>
+<div class="jumbotron">
+    <h1>QuickBooks HelloWorld sample application</h1>
+    <h2>Demonstrates Connect to QuickBooks flow and API request</h2>
+</div>
 
-<dl>
-    @foreach (var claim in System.Security.Claims.ClaimsPrincipal.Current.Claims)
-    {
-        <dt>
-            @claim.Type
-        </dt>
-        
-        <dd>
-            @claim.Value
-        </dd>
-    }
-</dl>
+<div class="row">
+    <div class="col-md-8">
+        @using (Html.BeginForm("InitiateAuth", "App", FormMethod.Post))
+        {
 
-<p>
-    @Html.ActionLink("Call service", "CallService")
-</p>
-
-<p>
-    @Html.ActionLink("Refresh token", "RefreshToken")
-</p>
-
-<p>
-    @Html.ActionLink("Revoke access token", "RevokeAccessToken")
-</p>
-
-<p>
-    @Html.ActionLink("Revoke refresh token", "RevokeRefreshToken")
-</p>
-
+            <div><input type="submit" name="submitButton" value="Connect to QuickBooks"/></div>
+            <br/>
+          
+            <br/>
+        }
+</div>
+</div>
