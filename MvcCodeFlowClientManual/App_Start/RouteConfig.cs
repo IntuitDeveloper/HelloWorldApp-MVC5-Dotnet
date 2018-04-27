@@ -17,8 +17,8 @@ namespace MvcCodeFlowClientManual
 
             routes.MapRoute(
                 "ErrorHandler",
-                "Error/{action}/{errMsg}",
-                new { controller = "Error", action = "Index", errMsg = UrlParameter.Optional }
+                "App/Error/{errMsg}",
+                new { controller = "App", action = "Error", errMsg = UrlParameter.Optional }
             );
         }
     }

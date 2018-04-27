@@ -74,6 +74,18 @@ namespace MvcCodeFlowClientManual.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Use the Index page of App controller to get all endpoints from discovery url
+        /// </summary>
+        /// <returns></returns>
+        public ActionResult Error()
+        {
+            return View("Error");
+        }
+
+        /// <summary>
+        /// Start Auth flow
+        /// </summary>
         public ActionResult InitiateAuth(string submitButton)
         {
             switch (submitButton)
@@ -131,7 +143,7 @@ namespace MvcCodeFlowClientManual.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return View("ApiCallService", (object)"QBO API calls Failed!");
+                    return View("ApiCallService", (object)("QBO API calls Failed!" + " Error message: " + ex.Message));
                 }
             }
             else

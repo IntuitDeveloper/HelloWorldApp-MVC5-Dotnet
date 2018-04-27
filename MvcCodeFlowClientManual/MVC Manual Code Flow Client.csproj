@@ -203,7 +203,6 @@
     <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\CallbackController.cs" />
-    <Compile Include="Controllers\ErrorController.cs" />
     <Compile Include="Controllers\AppController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -279,7 +278,6 @@
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\App\Index.cshtml" />
     <Content Include="Views\Callback\Index.cshtml" />
-    <Content Include="Views\Error\Index.cshtml" />
     <Content Include="Scripts\jquery-3.3.1.slim.min.map" />
     <Content Include="Scripts\jquery-3.3.1.min.map" />
     <Content Include="Scripts\umd\popper.min.js.map" />
@@ -293,6 +291,7 @@
     <Content Include="Scripts\popper-utils.js.map" />
     <Content Include="Views\App\Tokens.cshtml" />
     <Content Include="Views\App\ApiCallService.cshtml" />
+    <Content Include="Views\App\Error.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <TypeScriptCompile Include="Scripts\index.d.ts" />
