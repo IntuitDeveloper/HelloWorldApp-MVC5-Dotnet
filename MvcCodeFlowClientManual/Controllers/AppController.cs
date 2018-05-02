@@ -20,7 +20,6 @@ namespace MvcCodeFlowClientManual.Controllers
         public static string clientid = ConfigurationManager.AppSettings["clientid"];
         public static string clientsecret = ConfigurationManager.AppSettings["clientsecret"];
         public static string redirectUrl = ConfigurationManager.AppSettings["redirectUrl"];
-        public static string stateCSRFToken = "";
 
         public static string authorizeUrl = "";
         public static string tokenEndpoint = "";
@@ -28,7 +27,6 @@ namespace MvcCodeFlowClientManual.Controllers
 
         public static string access_token = "";
         public static string refresh_token = "";
-        public static string identity_token = "";
         DiscoveryClient discoveryClient;
         DiscoveryResponse doc;
         public static string scope;
@@ -36,7 +34,6 @@ namespace MvcCodeFlowClientManual.Controllers
         /// <summary>
         /// Use the Index page of App controller to get all endpoints from discovery url
         /// </summary>
-        /// <returns></returns>
         public async Task<ActionResult> Index()
         {
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
@@ -75,15 +72,6 @@ namespace MvcCodeFlowClientManual.Controllers
         }
 
         /// <summary>
-        /// Use the Index page of App controller to get all endpoints from discovery url
-        /// </summary>
-        /// <returns></returns>
-        public ActionResult Error()
-        {
-            return View("Error");
-        }
-
-        /// <summary>
         /// Start Auth flow
         /// </summary>
         public ActionResult InitiateAuth(string submitButton)
@@ -93,7 +81,6 @@ namespace MvcCodeFlowClientManual.Controllers
                 case "Connect to QuickBooks":
                     scope = OidcScopes.Accounting.GetStringValue();
 
-                    //Make Authorization request which will provide you a code on callback controller 
                     var request = new AuthorizeRequest(authorizeUrl);
 
                     var state = Guid.NewGuid().ToString("N");
@@ -118,7 +105,6 @@ namespace MvcCodeFlowClientManual.Controllers
         /// </summary>
         public ActionResult ApiCallService()
         {
-            //Make QBO api calls using .Net SDK
             if (Session["realmId"] != null)
             {
                 string realmId = Session["realmId"].ToString();
@@ -139,15 +125,23 @@ namespace MvcCodeFlowClientManual.Controllers
                     {
                         NullValueHandling = NullValueHandling.Ignore
                     });
-                    return View("ApiCallService", (object)output);
+                    return View("ApiCallService", (object)("QBO API call Successful!! Response: " + output));
                 }
                 catch (Exception ex)
                 {
-                    return View("ApiCallService", (object)("QBO API calls Failed!" + " Error message: " + ex.Message));
+                    return View("ApiCallService", (object)("QBO API call Failed!" + " Error message: " + ex.Message));
                 }
             }
             else
                 return View("ApiCallService", (object)"QBO API call Failed!");
+        }
+
+        /// <summary>
+        /// Use the Index page of App controller to get all endpoints from discovery url
+        /// </summary>
+        public ActionResult Error()
+        {
+            return View("Error");
         }
 
         /// <summary>
@@ -161,7 +155,6 @@ namespace MvcCodeFlowClientManual.Controllers
         /// <summary>
         /// Create a temp state to add new claim info for logged in user
         /// </summary>
-        /// <param name="state"></param>
         private void SetTempState(string state)
         {
             //Assign temp state for the logged in user's claims

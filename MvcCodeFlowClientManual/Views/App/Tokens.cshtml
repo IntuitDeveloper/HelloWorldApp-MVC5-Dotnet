@@ -3,20 +3,27 @@
     ViewBag.Title = "Tokens";
 }
 
-<dl>
-    @foreach (var claim in System.Security.Claims.ClaimsPrincipal.Current.Claims)
+<br />
+
+@foreach (var claim in System.Security.Claims.ClaimsPrincipal.Current.Claims)
+{
+
+    if (@claim.Type == "access_token")
     {
-        <dt>
-            @claim.Type
-        </dt>
-
-        <dd>
-            @claim.Value
-        </dd>
+        <p>Connection successful!</p>
+        break;
     }
-</dl>
 
-<p>
-    @Html.ActionLink("API Call service", "ApiCallService", "App")
-</p>
+}
+
+<br />
+
+@using (Html.BeginForm("ApiCallService", "App", FormMethod.Post))
+{
+
+    <div><input type="submit" name="submitButton" value="API Call service" /></div>
+    <br />
+
+    <br />
+}
 
