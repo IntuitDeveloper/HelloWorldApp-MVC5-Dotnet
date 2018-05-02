@@ -1,308 +1,168 @@
-﻿
-using Intuit.Ipp.OAuth2PlatformClient;
-using Intuit.Ipp.Core;
-using Intuit.Ipp.Data;
-using Intuit.Ipp.QueryFilter;
-using Intuit.Ipp.Security;
-using Newtonsoft.Json.Linq;
+﻿using Intuit.Ipp.OAuth2PlatformClient;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using System.Configuration;
 using System.Net;
-using System.Net.Http.Headers;
-using Intuit.Ipp.DataService;
+using Intuit.Ipp.Core;
+using Intuit.Ipp.Data;
+using Intuit.Ipp.QueryFilter;
+using Intuit.Ipp.Security;
+using System.Linq;
+using Newtonsoft.Json;
 
 namespace MvcCodeFlowClientManual.Controllers
 {
-    
-
-    [Authorize]
     public class AppController : Controller
     {
-        public static string mod;
-        public static string expo;
-
         public static string clientid = ConfigurationManager.AppSettings["clientid"];
         public static string clientsecret = ConfigurationManager.AppSettings["clientsecret"];
         public static string redirectUrl = ConfigurationManager.AppSettings["redirectUrl"];
-        public static string stateCSRFToken = "";
 
         public static string authorizeUrl = "";
         public static string tokenEndpoint = "";
-        public static string revocationEndpoint = "";
-        public static string userinfoEndpoint = "";
-        public static string issuerEndpoint = "";
         public static string code = "";
 
         public static string access_token = "";
         public static string refresh_token = "";
-        public static string identity_token = "";
-        public static IList<JsonWebKey> keys;
+        DiscoveryClient discoveryClient;
+        DiscoveryResponse doc;
+        public static string scope;
 
-
-        
-
-
-        public ActionResult Index()
+        /// <summary>
+        /// Use the Index page of App controller to get all endpoints from discovery url
+        /// </summary>
+        public async Task<ActionResult> Index()
         {
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+
+            Session.Clear();
+            Session.Abandon();
+            Request.GetOwinContext().Authentication.SignOut("Cookies");
+
+            //Intialize DiscoverPolicy on page load
+            DiscoveryPolicy dpolicy = new DiscoveryPolicy();
+            dpolicy.RequireHttps = true;
+            dpolicy.ValidateIssuerName = true;
+
+            //Read discovery url from config
+            string discoveryUrl = ConfigurationManager.AppSettings["DiscoveryUrl"];
+
+            if (discoveryUrl != null && clientid != null && clientsecret != null)
+            {
+                discoveryClient = new DiscoveryClient(discoveryUrl);
+            }
+            else
+            {
+                Exception ex= new Exception("Discovery Url missing!");
+                throw ex;
+            }
+            doc = await discoveryClient.GetAsync();
+
+            //If discovery url is working then get all Authorization endpoints
+            if (doc.StatusCode == HttpStatusCode.OK)
+            {
+                authorizeUrl = doc.AuthorizeEndpoint;
+                tokenEndpoint = doc.TokenEndpoint;
+            }
+
             return View();
         }
 
-       
         /// <summary>
-        /// Make a test QBO api call with .Net sdk
+        /// Start Auth flow
         /// </summary>
-        /// <returns></returns>
-        public async Task<ActionResult> CallService()
+        public ActionResult InitiateAuth(string submitButton)
         {
-            //var principal = User as ClaimsPrincipal;
+            switch (submitButton)
+            {
+                case "Connect to QuickBooks":
+                    scope = OidcScopes.Accounting.GetStringValue();
 
-            ////Make QBO api all without .Net SDK
-            //string query = "select * from CompanyInfo";
-            //// build the  request
-            //string encodedQuery = WebUtility.UrlEncode(query);
-            //if (Session["realmId"] != null)
-            //{
-            //    string realmId = Session["realmId"].ToString();
+                    var request = new AuthorizeRequest(authorizeUrl);
 
-            //    string qboBaseUrl = ConfigurationManager.AppSettings["QBOBaseUrl"];
+                    var state = Guid.NewGuid().ToString("N");
+                    SetTempState(state);
 
-            //    //add qbobase url and query
-            //    string uri = string.Format("{0}/v3/company/{1}/query?query={2}", qboBaseUrl, realmId, encodedQuery);
-               
-            //    string result="";
-                
-            //    try
-            //    {
-            //        var client = new HttpClient();
-                    
-            //        client.DefaultRequestHeaders.Add("Accept", "application/json;charset=UTF-8");
-            //        client.DefaultRequestHeaders.Add("ContentType", "application/json;charset=UTF-8");
-            //        client.DefaultRequestHeaders.Add("Authorization", "Bearer " + principal.FindFirst("access_token").Value);
-                    
+                    authorizeUrl = request.CreateAuthorizeUrl(
+                       clientId: clientid,
+                       responseType: OidcConstants.AuthorizeResponse.Code,
+                       scope: scope,
+                       redirectUri: redirectUrl,
+                       state: state);
 
-            //        result = await client.GetStringAsync(uri);
-            //        return View("CallService",(object)( "QBO API call success! " + result));
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        return View("CallService",(object)"QBO API call Failed!");
-            //    }
+                    return Redirect(authorizeUrl);
 
-       
-                //Make QBO api calls using .Net SDK
-                if (Session["realmId"] != null)
+                default:
+                    return (View());
+            }
+        }
+
+        /// <summary>
+        /// QBO API Request
+        /// </summary>
+        public ActionResult ApiCallService()
+        {
+            if (Session["realmId"] != null)
+            {
+                string realmId = Session["realmId"].ToString();
+                try
                 {
-                    string realmId = Session["realmId"].ToString();
+                    var principal = User as ClaimsPrincipal;
+                    OAuth2RequestValidator oauthValidator = new OAuth2RequestValidator(principal.FindFirst("access_token").Value);
+                    
+                    // Create a ServiceContext with Auth tokens and realmId
+                    ServiceContext serviceContext = new ServiceContext(realmId, IntuitServicesType.QBO, oauthValidator);
+                    serviceContext.IppConfiguration.MinorVersion.Qbo = "23";
 
-                
-
-                    try
-                    {
-                    // Use access token to retrieve company Info and create an Invoice
-                    //Initialize OAuth2RequestValidator and ServiceContext
-
-                    ServiceContext serviceContext = IntializeContext(realmId);
-                    QueryService<CompanyInfo> querySvc = new QueryService<CompanyInfo>(serviceContext);//CompanyInfo call
+                    // Create a QuickBooks QueryService using ServiceContext
+                    QueryService<CompanyInfo> querySvc = new QueryService<CompanyInfo>(serviceContext); 
                     CompanyInfo companyInfo = querySvc.ExecuteIdsQuery("SELECT * FROM CompanyInfo").FirstOrDefault();
-                    CreateInvoice(realmId);//US company invoice create
-                    return View("CallService", (object)("QBO API calls success! "));
-                    }
-                    catch (Exception ex)
+
+                    string output = JsonConvert.SerializeObject(companyInfo, new JsonSerializerSettings
                     {
-                        return View("CallService", (object)"QBO API calls Failed!");
-                    }
-
+                        NullValueHandling = NullValueHandling.Ignore
+                    });
+                    return View("ApiCallService", (object)("QBO API call Successful!! Response: " + output));
                 }
+                catch (Exception ex)
+                {
+                    return View("ApiCallService", (object)("QBO API call Failed!" + " Error message: " + ex.Message));
+                }
+            }
             else
-                return View("CallService",(object)"QBO API call Failed!");
+                return View("ApiCallService", (object)"QBO API call Failed!");
         }
 
         /// <summary>
-        /// Refresh the token by making the call to 
+        /// Use the Index page of App controller to get all endpoints from discovery url
         /// </summary>
-        /// <returns></returns>
-        public async Task<ActionResult> RefreshToken()
+        public ActionResult Error()
         {
-            //Refresh Token call to tokenendpoint
-            var tokenClient = new TokenClient(AppController.tokenEndpoint, AppController.clientid, AppController.clientsecret);
-            var principal = User as ClaimsPrincipal;
-            var refreshToken = principal.FindFirst("refresh_token").Value;
-
-            TokenResponse response = await tokenClient.RequestRefreshTokenAsync(refreshToken);
-            UpdateCookie(response);
-
-            return RedirectToAction("Index");
+            return View("Error");
         }
 
         /// <summary>
-        /// This API creates an Invoice
+        /// Action that takes redirection from Callback URL
         /// </summary>
-        private void CreateInvoice(string realmId)
+        public ActionResult Tokens()
         {
-          
-
-
-
-                // Step 1: Initialize OAuth2RequestValidator and ServiceContext
-                ServiceContext serviceContext = IntializeContext(realmId);
-
-            // Step 2: Initialize an Invoice object
-            Invoice invoice = new Invoice();
-            invoice.Deposit = new Decimal(0.00);
-            invoice.DepositSpecified = true;
-
-            // Step 3: Invoice is always created for a customer so lets retrieve reference to a customer and set it in Invoice
-            QueryService<Customer> querySvc = new QueryService<Customer>(serviceContext);
-            Customer customer = querySvc.ExecuteIdsQuery("SELECT * FROM Customer WHERE CompanyName like 'Amy%'").FirstOrDefault();
-            invoice.CustomerRef = new ReferenceType()
-            {
-                Value = customer.Id
-            };
-
-
-            // Step 4: Invoice is always created for an item so lets retrieve reference to an item and a Line item to the invoice
-            QueryService<Item> querySvcItem = new QueryService<Item>(serviceContext);
-            Item item = querySvcItem.ExecuteIdsQuery("SELECT * FROM Item WHERE Name = 'Lighting'").FirstOrDefault();
-            List<Line> lineList = new List<Line>();
-            Line line = new Line();
-            line.Description = "Description";
-            line.Amount = new Decimal(100.00);
-            line.AmountSpecified = true;
-            lineList.Add(line);
-            invoice.Line = lineList.ToArray();
-
-            SalesItemLineDetail salesItemLineDetail = new SalesItemLineDetail();
-            salesItemLineDetail.Qty = new Decimal(1.0);
-            salesItemLineDetail.ItemRef = new ReferenceType()
-            {
-                Value = item.Id
-            };
-            line.AnyIntuitObject = salesItemLineDetail;
-
-            line.DetailType = LineDetailTypeEnum.SalesItemLineDetail;
-            line.DetailTypeSpecified = true;
-
-            // Step 5: Set other properties such as Total Amount, Due Date, Email status and Transaction Date
-            invoice.DueDate = DateTime.UtcNow.Date;
-            invoice.DueDateSpecified = true;
-
-
-            invoice.TotalAmt = new Decimal(10.00);
-            invoice.TotalAmtSpecified = true;
-
-            invoice.EmailStatus = EmailStatusEnum.NotSet;
-            invoice.EmailStatusSpecified = true;
-
-            invoice.Balance = new Decimal(10.00);
-            invoice.BalanceSpecified = true;
-
-            invoice.TxnDate = DateTime.UtcNow.Date;
-            invoice.TxnDateSpecified = true;
-            invoice.TxnTaxDetail = new TxnTaxDetail()
-            {
-                TotalTax = Convert.ToDecimal(10),
-                TotalTaxSpecified = true,
-            };
-
-            // Step 6: Initialize the service object and create Invoice
-            DataService service = new DataService(serviceContext);
-            Invoice addedInvoice = service.Add<Invoice>(invoice);
-        }
-
-        private ServiceContext IntializeContext(string realmId)
-        {
-            var principal = User as ClaimsPrincipal;
-            OAuth2RequestValidator oauthValidator = new OAuth2RequestValidator(principal.FindFirst("access_token").Value);
-            ServiceContext serviceContext = new ServiceContext(realmId, IntuitServicesType.QBO, oauthValidator);
-            //Enable minorversion 
-            serviceContext.IppConfiguration.MinorVersion.Qbo = "23";
-            //Enable logging
-            //serviceContext.IppConfiguration.Logger.RequestLog.EnableRequestResponseLogging = true;
-            //serviceContext.IppConfiguration.Logger.RequestLog.ServiceRequestLoggingLocation = @"C:\IdsLogs";//Create a folder in your drive first
-
-            return serviceContext;
+            return View("Tokens");
         }
 
         /// <summary>
-        /// Revoke access tokens
+        /// Create a temp state to add new claim info for logged in user
         /// </summary>
-        /// <returns></returns>
-        public async Task<ActionResult> RevokeAccessToken()
+        private void SetTempState(string state)
         {
-            var accessToken = (User as ClaimsPrincipal).FindFirst("access_token").Value;
-
-            //Revoke Access token call
-            var revokeClient = new TokenRevocationClient(AppController.revocationEndpoint, clientid, clientsecret);
-
-            //Revoke access token
-            TokenRevocationResponse revokeAccessTokenResponse = await revokeClient.RevokeAccessTokenAsync(accessToken);
-            if (revokeAccessTokenResponse.HttpStatusCode == HttpStatusCode.OK)
-            {
-                Session.Abandon();
-                Request.GetOwinContext().Authentication.SignOut();
-                
-            }//delete claims and cookies
+            //Assign temp state for the logged in user's claims
+            var tempId = new ClaimsIdentity("TempState");
+            tempId.AddClaim(new Claim("state", state));
            
-            return RedirectToAction("Index");
+            //Sign in with temp state
+            Request.GetOwinContext().Authentication.SignIn(tempId);
         }
-
-        /// <summary>
-        /// Revoke refresh tokens
-        /// </summary>
-        /// <returns></returns>
-        public async Task<ActionResult> RevokeRefreshToken()
-        {
-            var refreshToken = (User as ClaimsPrincipal).FindFirst("refresh_token").Value;
-            
-            //Revoke Refresh token call
-            var revokeClient = new TokenRevocationClient(AppController.revocationEndpoint, clientid, clientsecret);
-
-            //Revoke refresh token
-            TokenRevocationResponse revokeAccessTokenResponse = await revokeClient.RevokeAccessTokenAsync(refreshToken);
-            if (revokeAccessTokenResponse.HttpStatusCode == HttpStatusCode.OK)
-            {
-                Session.Abandon();
-                Request.GetOwinContext().Authentication.SignOut();
-            }
-            //return RedirectToAction("Index");
-            return RedirectToAction("Index");
-        }
-
-        //Update cookie with new claim indfo/tokens for logged in user
-        private void UpdateCookie(TokenResponse response)
-        {
-            if (response.IsError)
-            {
-                throw new Exception(response.Error);
-            }
-
-            var identity = (User as ClaimsPrincipal).Identities.First();
-            var result = from c in identity.Claims
-                         where c.Type != "access_token" &&
-                               c.Type != "refresh_token" &&
-                               c.Type != "access_token_expires_at" &&
-                               c.Type != "access_token_expires_at" 
-                         select c;
-
-            var claims = result.ToList();
-
-            claims.Add(new Claim("access_token", response.AccessToken));
-           
-            claims.Add(new Claim("access_token_expires_at", (DateTime.Now.AddSeconds(response.AccessTokenExpiresIn)).ToString()));
-            claims.Add(new Claim("refresh_token", response.RefreshToken));
-           
-            claims.Add(new Claim("refresh_token_expires_at", (DateTime.UtcNow.ToEpochTime() + response.RefreshTokenExpiresIn).ToDateTimeFromEpoch().ToString()));
-           
-            var newId = new ClaimsIdentity(claims, "Cookies");
-            Request.GetOwinContext().Authentication.SignIn(newId);
-        }
-        
     }
 }
