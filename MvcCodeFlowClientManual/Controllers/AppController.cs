@@ -121,10 +121,7 @@ namespace MvcCodeFlowClientManual.Controllers
                     QueryService<CompanyInfo> querySvc = new QueryService<CompanyInfo>(serviceContext); 
                     CompanyInfo companyInfo = querySvc.ExecuteIdsQuery("SELECT * FROM CompanyInfo").FirstOrDefault();
 
-                    string output = JsonConvert.SerializeObject(companyInfo, new JsonSerializerSettings
-                    {
-                        NullValueHandling = NullValueHandling.Ignore
-                    });
+                    string output = "Company Name: " + companyInfo.CompanyName + " Company Address: " + companyInfo.CompanyAddr.Line1 + ", " + companyInfo.CompanyAddr.City + ", " + companyInfo.CompanyAddr.Country + " " + companyInfo.CompanyAddr.PostalCode;
                     return View("ApiCallService", (object)("QBO API call Successful!! Response: " + output));
                 }
                 catch (Exception ex)
