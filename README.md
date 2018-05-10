@@ -38,10 +38,8 @@ After setting up both Developer Portal and your [Web.config](https://github.com/
 
 ### Connect To QuickBooks 
 This flow goes through authorization flow where QBO user logs in and authorizes your app. At the end of this process, the app will end up with Access tokens.
-[![image](views/authorize.png)]
 
 ### QBO API request
 Access tokens from Connect to QuickBooks flow are used to make a CompanyInfo request which gives the QBO company name, address and other data.
-[![image](views/api_request.png)]
 
 [ss1]: https://help.developer.intuit.com/s/samplefeedback?cid=9010&repoName=HelloWorldApp-MVC5-Dotnet
