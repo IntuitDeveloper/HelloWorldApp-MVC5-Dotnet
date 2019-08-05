@@ -44,6 +44,5 @@ This flow goes through authorization flow where QBO user logs in and authorizes 
 ### QBO API request
 Access tokens from Connect to QuickBooks flow are used to make a CompanyInfo request which gives the QBO company name, address and other data.
 
-### Note: This app uses new OAuth2Client. If you want to refer the other way to use standalone OAuth2 clients, download v1.0 from Release tab
 
 [ss1]: https://help.developer.intuit.com/s/samplefeedback?cid=9010&repoName=HelloWorldApp-MVC5-Dotnet
