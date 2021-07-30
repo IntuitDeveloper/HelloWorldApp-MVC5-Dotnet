@@ -44,5 +44,6 @@ This flow goes through authorization flow where QBO user logs in and authorizes 
 ### QBO API request
 Access tokens from Connect to QuickBooks flow are used to make a CompanyInfo request which gives the QBO company name, address and other data.
 
-
-[ss1]: https://help.developer.intuit.com/s/samplefeedback?cid=9010&repoName=HelloWorldApp-MVC5-Dotnet
+[ss1]: #
+[ss2]: https://customersurveys.intuit.com/jfe/form/SV_9LWgJBcyy3NAwHc?check=Yes&checkpoint=HelloWorldApp-MVC5-Dotnet&pageUrl=github
+[ss3]: https://customersurveys.intuit.com/jfe/form/SV_9LWgJBcyy3NAwHc?check=No&checkpoint=HelloWorldApp-MVC5-Dotnet&pageUrl=github
